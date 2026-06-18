@@ -1,0 +1,292 @@
+version: '3.9'
+
+services:
+  # ===================== DATABASE =====================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: autoform_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autoformfiller
+      POSTGRES_USER: autoform
+      POSTGRES_PASSWORD: autoform_secret
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../database/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autoform -d autoformfiller"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - autoform_net
+
+  # ===================== REDIS =====================
+  redis:
+    image: redis:7-alpine
+    container_name: autoform_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - autoform_net
+
+  # ===================== MINIO =====================
+  minio:
+    image: minio/minio:latest
+    container_name: autoform_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin_secret_change_in_prod
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+    networks:
+      - autoform_net
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: autoform_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin_secret_change_in_prod;
+        mc mb --ignore-existing local/autoformfiller-docs;
+        mc mb --ignore-existing local/autoformfiller-rag;
+        mc anonymous set none local/autoformfiller-docs;
+        mc anonymous set none local/autoformfiller-rag;
+        echo 'MinIO buckets initialized.';
+      "
+    networks:
+      - autoform_net
+    restart: on-failure
+
+  # ===================== OLLAMA (Local LLM) =====================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: autoform_ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+      OLLAMA_NUM_PARALLEL: 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - autoform_net
+    # Uncomment for GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ===================== BACKEND (FastAPI) =====================
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: autoform_backend
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://autoform:autoform_secret@postgres:5432/autoformfiller
+      DATABASE_SYNC_URL: postgresql://autoform:autoform_secret@postgres:5432/autoformfiller
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      OLLAMA_HOST: http://ollama:11434
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - ../backend:/app
+      - ../ai_services:/ai_services
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - autoform_net
+
+  # ===================== CELERY WORKER =====================
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: autoform_celery
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4 -Q documents,forms,notifications
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://autoform:autoform_secret@postgres:5432/autoformfiller
+      DATABASE_SYNC_URL: postgresql://autoform:autoform_secret@postgres:5432/autoformfiller
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      OLLAMA_HOST: http://ollama:11434
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - ../backend:/app
+      - ../ai_services:/ai_services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - autoform_net
+
+  # ===================== CELERY BEAT (Scheduled Tasks) =====================
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: autoform_celery_beat
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_SYNC_URL: postgresql://autoform:autoform_secret@postgres:5432/autoformfiller
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    volumes:
+      - ../backend:/app
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - autoform_net
+
+  # ===================== FRONTEND (React Dev Server) =====================
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: autoform_frontend
+    restart: unless-stopped
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - autoform_net
+
+  # ===================== CADDY (Reverse Proxy) =====================
+  caddy:
+    image: caddy:2-alpine
+    container_name: autoform_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - autoform_net
+
+  # ===================== PROMETHEUS =====================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: autoform_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - autoform_net
+
+  # ===================== GRAFANA =====================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: autoform_grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: false
+    depends_on:
+      - prometheus
+    networks:
+      - autoform_net
+
+volumes:
+  pgdata:
+  redis_data:
+  minio_data:
+  ollama_models:
+  caddy_data:
+  caddy_config:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  autoform_net:
+    driver: bridge

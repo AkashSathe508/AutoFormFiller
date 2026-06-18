@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'AutoFormFiller'
+    orgId: 1
+    folder: 'AutoFormFiller'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

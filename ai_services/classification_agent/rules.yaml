@@ -1,0 +1,161 @@
+document_types:
+  AADHAAR:
+    keywords:
+      - "AADHAAR"
+      - "UNIQUE IDENTIFICATION"
+      - "UIDAI"
+      - "Government of India"
+      - "\u0906\u0927\u093e\u0930"  # Hindi: Aadhaar
+      - "\u092d\u093e\u0930\u0924 \u0938\u0930\u0915\u093e\u0930"  # Bharat Sarkar
+    patterns:
+      - "\\b\\d{4}\\s\\d{4}\\s\\d{4}\\b"  # 12-digit Aadhaar format
+      - "VID:\\s*\\d{16}"  # Virtual ID
+      - "Enrollment No"
+    keyword_weight: 3.0
+    pattern_weight: 4.0
+
+  PAN:
+    keywords:
+      - "INCOME TAX DEPARTMENT"
+      - "PERMANENT ACCOUNT NUMBER"
+      - "GOVT. OF INDIA"
+      - "Income Tax"
+    patterns:
+      - "[A-Z]{5}[0-9]{4}[A-Z]{1}"  # PAN format
+      - "Permanent Account Number"
+    keyword_weight: 3.0
+    pattern_weight: 4.0
+
+  PASSPORT:
+    keywords:
+      - "PASSPORT"
+      - "REPUBLIC OF INDIA"
+      - "Ministry of External Affairs"
+      - "GIVEN NAMES"
+      - "NATIONALITY"
+      - "PLACE OF BIRTH"
+    patterns:
+      - "[A-Z][0-9]{7}"  # Passport number
+      - "P<IND"  # MRZ line
+    keyword_weight: 2.0
+    pattern_weight: 4.0
+
+  DRIVING_LICENSE:
+    keywords:
+      - "DRIVING LICENCE"
+      - "DRIVING LICENSE"
+      - "Motor Vehicles Act"
+      - "Transport Department"
+      - "DL No"
+      - "License No"
+    patterns:
+      - "[A-Z]{2}\\d{2}\\s?\\d{11}"  # DL format
+    keyword_weight: 2.0
+    pattern_weight: 3.0
+
+  MARKSHEET_10:
+    keywords:
+      - "CBSE"
+      - "SECONDARY SCHOOL"
+      - "SSC"
+      - "BOARD OF SECONDARY"
+      - "CLASS X"
+      - "CLASS 10"
+      - "MATRICULATION"
+      - "HIGH SCHOOL CERTIFICATE"
+      - "10TH"
+    patterns:
+      - "(Roll No|Roll Number).*\\d{5,12}"
+      - "(Class|Std)\\.?\\s?(X|10)"
+    keyword_weight: 2.0
+    pattern_weight: 2.0
+
+  MARKSHEET_12:
+    keywords:
+      - "HIGHER SECONDARY"
+      - "HSC"
+      - "SENIOR SECONDARY"
+      - "CLASS XII"
+      - "CLASS 12"
+      - "INTERMEDIATE"
+      - "12TH"
+      - "SCIENCE"
+      - "COMMERCE"
+      - "ARTS"
+    patterns:
+      - "(Roll No|Roll Number).*\\d{5,12}"
+      - "(Class|Std)\\.?\\s?(XII|12)"
+    keyword_weight: 2.0
+    pattern_weight: 2.0
+
+  DEGREE_CERTIFICATE:
+    keywords:
+      - "UNIVERSITY"
+      - "BACHELOR OF"
+      - "MASTER OF"
+      - "DEGREE"
+      - "CONVOCATION"
+      - "GRADUATE"
+    patterns:
+      - "Bachelor|B\\.E\\.|B\\.Tech|B\\.Sc|B\\.Com|B\\.A\\."
+    keyword_weight: 2.0
+    pattern_weight: 2.0
+
+  CASTE_CERTIFICATE:
+    keywords:
+      - "CASTE CERTIFICATE"
+      - "CASTE PARTICULARS"
+      - "SCHEDULED CASTE"
+      - "SCHEDULED TRIBE"
+      - "OBC"
+      - "OTHER BACKWARD CLASS"
+      - "\u091c\u093e\u0924\u093f \u092a\u094d\u0930\u092e\u093e\u0923 \u092a\u0924\u094d\u0930"  # Jaati Praman Patra
+    patterns:
+      - "(SC|ST|OBC|EWS|GENERAL).*Category"
+      - "Certificate No.*[A-Z0-9]+"
+    keyword_weight: 2.5
+    pattern_weight: 2.0
+
+  INCOME_CERTIFICATE:
+    keywords:
+      - "INCOME CERTIFICATE"
+      - "ANNUAL INCOME"
+      - "FAMILY INCOME"
+      - "\u0906\u092f \u092a\u094d\u0930\u092e\u093e\u0923 \u092a\u0924\u094d\u0930"  # Aay Praman Patra
+      - "Total Income"
+      - "Income per annum"
+    patterns:
+      - "Rs\\.?\\s*[0-9,]+/? per annum"
+      - "Income.*[0-9,]+(\\s*rupees|\\s*Rs)"
+    keyword_weight: 2.5
+    pattern_weight: 2.0
+
+  UTILITY_BILL:
+    keywords:
+      - "ELECTRICITY BILL"
+      - "WATER BILL"
+      - "TELEPHONE BILL"
+      - "GAS BILL"
+      - "CONSUMER NO"
+      - "ACCOUNT NO"
+      - "UNITS CONSUMED"
+    patterns:
+      - "Bill (Date|No|Period)"
+      - "Consumer Number.*\\d+"
+    keyword_weight: 2.0
+    pattern_weight: 2.0
+
+  MEDICAL_DOCUMENT:
+    keywords:
+      - "HOSPITAL"
+      - "PATIENT"
+      - "DIAGNOSIS"
+      - "PRESCRIPTION"
+      - "MEDICAL CERTIFICATE"
+      - "DOCTOR"
+      - "CLINIC"
+    patterns:
+      - "Reg\\. No\\..*\\d+"
+      - "(Prescription|Diagnosis|Treatment)"
+    keyword_weight: 1.5
+    pattern_weight: 1.5

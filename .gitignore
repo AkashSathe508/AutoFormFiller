@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.pyo
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Secrets
+*.env
+!.env.example
+secrets/
+
+# Model weights (large files)
+*.gguf
+*.bin
+paddleocr_models/
+.ollama/
+models/
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
+.nuxt/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+
+# MinIO data
+minio_data/
+
+# Postgres data
+pgdata/
+
+# Redis data
+redis_data/
+
+# Temp files
+tmp/
+*.tmp
