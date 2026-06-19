@@ -257,7 +257,7 @@ class TestFormMappingService:
 
         svc = self._make_service(mock_db)
         with patch.object(svc, "_llm_match", return_value=None), \
-             patch.object(svc, "_embedding_match", return_value=None):
+             patch.object(svc, "_embedding_match", return_value=(None, 0.0)):
             key, conf, method = svc.resolve(
                 {"field_id": "xyz", "label": "Preferred Exam Centre 2024"}
             )

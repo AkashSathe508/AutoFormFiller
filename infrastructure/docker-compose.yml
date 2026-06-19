@@ -181,6 +181,36 @@ services:
     networks:
       - autoform_net
 
+  # ===================== CELERY WORKER (Submission) =====================
+  submission-worker:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: autoform_submission_worker
+    restart: unless-stopped
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=2 -Q submission
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://autoform:autoform_secret@postgres:5432/autoformfiller
+      DATABASE_SYNC_URL: postgresql://autoform:autoform_secret@postgres:5432/autoformfiller
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      OLLAMA_HOST: http://ollama:11434
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      PLAYWRIGHT_HEADLESS: "True"
+    volumes:
+      - ../backend:/app
+      - ../ai_services:/ai_services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - autoform_net
+
   # ===================== CELERY BEAT (Scheduled Tasks) =====================
   celery-beat:
     build:
@@ -200,6 +230,18 @@ services:
     depends_on:
       - redis
       - postgres
+    networks:
+      - autoform_net
+
+  # ===================== MOCK PORTAL =====================
+  mock-portal:
+    build:
+      context: ../mock_portal
+      dockerfile: Dockerfile
+    container_name: autoform_mock_portal
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
     networks:
       - autoform_net
 

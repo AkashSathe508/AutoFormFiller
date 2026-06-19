@@ -221,5 +221,32 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status, note }),
     }),
+  },
+
+  // Submissions (Phase 3)
+  submissions: {
+    listAdapters: () => request<{ adapters: { adapter_id: string; display_name: string; portal_url: string }[] }>('/submissions/adapters'),
+    approve: (instance_id: string, acknowledgement?: string) => request<{ status: string }>(`/submissions/instances/${instance_id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ acknowledgement: acknowledgement || null }),
+    }),
+    submit: (instance_id: string, adapter_id: string, credentials: Record<string, string>, form_url: string = '') => request<{ run_id: string; status: string }>(`/submissions/instances/${instance_id}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ adapter_id, credentials, form_url }),
+    }),
+    getRun: (run_id: string) => request<{ run_id: string; status: string; portal_reference: string | null; error_detail: string | null; screenshot_count: number }>(`/submissions/runs/${run_id}`),
+    resolveCaptcha: (run_id: string, note?: string) => request<{ status: string }>(`/submissions/runs/${run_id}/resolve-captcha`, {
+      method: 'POST',
+      body: JSON.stringify({ note: note || null }),
+    }),
+    getAudit: (run_id: string) => request<any>(`/submissions/runs/${run_id}/audit`),
+  },
+
+  // RAG Assistant (Phase 4)
+  rag: {
+    ask: (question: string, scheme_id?: string, form_template_id?: string) => request<{ answer: string; sources: any[] }>('/rag/ask', {
+      method: 'POST',
+      body: JSON.stringify({ question, scheme_id, form_template_id }),
+    }),
   }
 };

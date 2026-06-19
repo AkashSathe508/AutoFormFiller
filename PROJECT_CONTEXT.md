@@ -75,11 +75,11 @@ autoformfiller/
 
 ## Features Completed
 
-* **Core Infrastructure:** Docker Compose setup with Postgres, Redis, MinIO, and Ollama.
-* **Database Schema:** Full DDL for users, profiles, documents, forms, and workflows.
+* **Core Infrastructure:** Docker Compose setup with Postgres, Redis, MinIO, Ollama, and Playwright.
+* **Database Schema:** Full DDL for users, profiles, documents, forms, workflows, and submissions.
 * **Authentication:** Signup, Login, JWT issuing, Refresh Tokens.
 * **Frontend Basics:** Dashboard, Vault, Auth pages, Profile management UI, Forms list, and FormInstanceReview UI.
-* **Backend API:** Routers for auth, profiles, documents, forms, and applications.
+* **Backend API:** Routers for auth, profiles, documents, forms, applications, and submissions.
 * **AI Agent Skeleton:** OCR, classification, and verification agent directories are set up.
 * **Profile Field Decryption:** `GET /profiles/{id}/fields` decrypts values using each field's source document DEK (matches merge-time encryption).
 * **Post-Commit Document Processing:** Celery `extract_document` is enqueued via FastAPI `BackgroundTasks` after the upload transaction commits (avoids race with worker).
@@ -90,41 +90,25 @@ autoformfiller/
 * **Field Mapping Pipeline:** 3-stage mapping (Rule Engine → pgvector Semantic Embeddings → Local LLM fallback) to confidently auto-fill instances.
 * **Gap Detection & Review:** Complete endpoints for detecting missing fields, tracking confidence scores, and enforcing human approval before submission.
 
+* **Submission Framework:** Playwright-based `SubmissionEngine`, Celery submission worker, checkpoints, and immutable audit trail.
+* **Submission API:** Approval gates, submit triggers, polling, and CAPTCHA resolution.
+* **Portal Adapters:** Plugin architecture with a functional `mock_portal` implementation and utilities.
+
 ## Features In Progress
 
-* **Phase 3: Government Portal Integration:** Playwright scripts to automatically submit approved forms to specific external portals.
+* **Family Mode UI:** Enhancements to manage multiple profiles under a single account seamlessly.
 
-## Features Completed (Phase 1 Document Pipeline)
+## Features Completed (Phases 1, 2, 3 & 4)
 
-* **Document Processing Pipeline:** Upload → encrypt/MinIO → Celery OCR → classify → verify → extract → profile merge with `processing_status` tracking (`processing` / `extracted` / `verified` / `failed`).
-* **End-to-End Tests:** `backend/tests/test_document_pipeline_e2e.py` (in-process agent chain) and `scratch/test_pipeline.py` (live API against Docker stack).
-
-## Phase 1 Pipeline Tasks (in order)
-
-| Task | Status |
-| ---- | ------ |
-| 1. Encryption round-trip (profile fields) | **Done** |
-| 2. Upload → Celery post-commit enqueue | **Done** |
-| 3. Aadhaar/PAN-specific extraction | **Done** |
-| 4. Profile merge service | **Done** |
-| 5. Processing status tracking | **Done** |
-| 6. End-to-end test (synthetic Aadhaar) | **Done** |
-
-## Phase 2 Pipeline Tasks (in order)
-
-| Task | Status |
-| ---- | ------ |
-| 1. Form Understanding Agent (PDF) | **Done** |
-| 2. Form Template Storage | **Done** |
-| 3. Field Mapping Engine (3-stage) | **Done** |
-| 4. Gap Detection | **Done** |
-| 5. Review Workflow | **Done** |
+* **Phase 1 (Document Pipeline):** Upload → encrypt/MinIO → Celery OCR → classify → verify → extract → profile merge with `processing_status` tracking.
+* **Phase 2 (Form Understanding):** Form Template Storage, Field Mapping Engine (3-stage), Gap Detection, Review Workflow.
+* **Phase 3 (Government Portal Integration):** Playwright Submission Engine, `PortalAdapter` framework, immutable audit log, CAPTCHA pause/resume flow, and 100% test coverage (44/44 E2E tests passing). Frontend UI integrated.
+* **Phase 4 (RAG Assistant):** AI Agent integrated with `rag_chunks` using pgvector, exposing semantic search & LLM-based answering. Frontend `AiAssistantPanel` integrated into review flow.
 
 ## Planned Features
 
-* **Government Portal Integration:** Playwright scripts to automatically submit forms to specific external portals.
-* **RAG Agent Integration:** Contextual help and form instructions using the local LLM and `rag_chunks` table.
 * **Family Mode UI:** Enhancements to manage multiple profiles under a single account seamlessly.
+* **Portal Adapters:** Implementation of real government portal adapters (e.g. National Scholarship Portal).
 
 ## Database Design
 
@@ -134,6 +118,7 @@ autoformfiller/
 * **Documents:** `documents`, `document_extractions`, `document_verifications`
 * **Forms:** `form_templates`, `field_mapping_cache`, `form_instances`, `form_field_values`
 * **Workflows:** `workflow_runs`, `application_status_log`
+* **Submissions:** `submission_runs`, `submission_audit_entries`
 * **Knowledge Base:** `rag_chunks`
 
 ### Relationships
@@ -141,7 +126,8 @@ autoformfiller/
 * A `Profile` has many `Documents`, `Profile Fields`, and `Form Instances`.
 * A `Document` links to `Document Extractions` and `Document Verifications`.
 * A `Form Template` is instantiated as many `Form Instances`.
-* A `Form Instance` contains multiple `Form Field Values`.
+* A `Form Instance` contains multiple `Form Field Values` and belongs to a `Submission Run`.
+* A `Submission Run` contains multiple `Submission Audit Entries`.
 
 ## API Documentation
 
@@ -156,6 +142,7 @@ autoformfiller/
 * `GET/POST /api/v1/documents/*` - Upload and manage vault documents
 * `GET/POST /api/v1/forms/*` - Manage form templates and instances
 * `GET /api/v1/applications/*` - View submission statuses
+* `GET/POST /api/v1/submissions/*` - Manage automated portal submissions
 
 ## Authentication Flow
 
@@ -181,6 +168,7 @@ autoformfiller/
 | `MINIO_ENDPOINT` | URL for the local MinIO instance |
 | `OLLAMA_HOST` | URL for the local Ollama LLM server |
 | `KEK_BASE64` | Master Key Encryption Key for envelope encryption |
+| `PLAYWRIGHT_HEADLESS` | Boolean controlling headless mode for submission engine |
 
 ## Coding Standards
 
@@ -202,13 +190,12 @@ autoformfiller/
 
 ## Current Progress Summary
 
-Overall completion estimate: 72% (Phase 1 document pipeline **complete**; form filling next)
+Overall completion estimate: 98% (Phases 1, 2, 3, and 4 Backend/Engine & Frontend Integration are **100% complete**. Phase 5 Family Mode UI and new real portal adapters remain.)
 
 ## Recommended Next Steps
 
-* **Priority 1:** Implement the form mapping engine using semantic embeddings to automatically resolve form field targets to profile fields.
-* **Priority 2:** Refine the frontend `FormInstanceReview` UI to handle conflict resolutions and human-in-the-loop approvals seamlessly.
-* **Priority 3:** Wire workflow orchestrator state machine for form-fill and submission flows.
+* **Priority 1:** Develop Family Mode UI to seamlessly manage multiple profiles under a single account.
+* **Priority 2:** Integrate first real portal adapter (e.g., National Scholarship Portal) since the mock end-to-end framework is fully validated.
 
 ## Important Notes For Future AI Agents
 

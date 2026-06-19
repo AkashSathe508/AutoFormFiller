@@ -23,7 +23,8 @@ WORKDIR /app
 
 # Copy and install Python dependencies
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers
 RUN playwright install chromium

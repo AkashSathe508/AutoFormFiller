@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.config import settings
-from app.api.v1 import auth, profiles, documents, forms, applications
+from app.api.v1 import auth, profiles, documents, forms, applications, submissions, rag
 
 
 @asynccontextmanager
@@ -69,7 +69,8 @@ app.include_router(profiles.router, prefix="/api/v1/profiles", tags=["Profiles"]
 app.include_router(documents.router, prefix="/api/v1/documents", tags=["Documents"])
 app.include_router(forms.router, prefix="/api/v1/forms", tags=["Forms"])
 app.include_router(applications.router, prefix="/api/v1/applications", tags=["Applications"])
-
+app.include_router(submissions.router, prefix="/api/v1/submissions", tags=["Submissions"])
+app.include_router(rag.router, prefix="/api/v1/rag", tags=["RAG Assistant"])
 
 @app.get("/health")
 async def health_check():
