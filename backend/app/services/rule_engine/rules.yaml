@@ -1,0 +1,291 @@
+# Rule-based field label → canonical profile field key mappings.
+#
+# Structure:
+#   <profile_field_key>:
+#     - "Exact label variant 1"
+#     - "exact label variant 2"   (matching is case-insensitive, stripped)
+#
+# Add new variants freely — no code change required.
+# Labels may be English, transliterated Hindi, or common abbreviations.
+
+full_name:
+  - "Full Name"
+  - "Name"
+  - "Applicant Name"
+  - "Name of Applicant"
+  - "Candidate Name"
+  - "Student Name"
+  - "Name of Student"
+  - "Name of Candidate"
+  - "Applicant's Name"
+  - "Your Name"
+  - "पूरा नाम"
+  - "नाम"
+
+first_name:
+  - "First Name"
+  - "Given Name"
+  - "प्रथम नाम"
+
+last_name:
+  - "Last Name"
+  - "Surname"
+  - "Family Name"
+  - "उपनाम"
+
+dob:
+  - "Date of Birth"
+  - "DOB"
+  - "D.O.B"
+  - "Birth Date"
+  - "Date of birth (DD/MM/YYYY)"
+  - "जन्म तिथि"
+  - "जन्मतिथि"
+  - "जन्म दिनांक"
+
+age:
+  - "Age"
+  - "Age (in years)"
+  - "आयु"
+  - "उम्र"
+
+gender:
+  - "Gender"
+  - "Sex"
+  - "लिंग"
+
+father_name:
+  - "Father's Name"
+  - "Father Name"
+  - "Name of Father"
+  - "पिता का नाम"
+  - "पिता जी का नाम"
+
+mother_name:
+  - "Mother's Name"
+  - "Mother Name"
+  - "Name of Mother"
+  - "माता का नाम"
+  - "माता जी का नाम"
+
+spouse_name:
+  - "Spouse Name"
+  - "Husband's Name"
+  - "Wife's Name"
+  - "पति का नाम"
+  - "पत्नी का नाम"
+
+guardian_name:
+  - "Guardian Name"
+  - "Guardian's Name"
+  - "Name of Guardian"
+  - "Parent/Guardian Name"
+  - "अभिभावक का नाम"
+
+aadhaar_number:
+  - "Aadhaar Number"
+  - "Aadhaar No"
+  - "Aadhar Number"
+  - "Aadhar No"
+  - "Aadhaar Card Number"
+  - "UID Number"
+  - "UIDAI Number"
+  - "12-Digit Aadhaar"
+  - "आधार संख्या"
+  - "आधार नंबर"
+
+pan_number:
+  - "PAN"
+  - "PAN Number"
+  - "PAN No"
+  - "Permanent Account Number"
+  - "Income Tax PAN"
+  - "पैन नंबर"
+  - "पैन संख्या"
+
+passport_number:
+  - "Passport Number"
+  - "Passport No"
+  - "Passport No."
+  - "पासपोर्ट नंबर"
+
+driving_license_number:
+  - "Driving Licence Number"
+  - "Driving License Number"
+  - "DL Number"
+  - "DL No"
+  - "ड्राइविंग लाइसेंस नंबर"
+
+voter_id:
+  - "Voter ID"
+  - "Voter ID Number"
+  - "EPIC Number"
+  - "Voter Card Number"
+  - "मतदाता पहचान पत्र"
+
+email:
+  - "Email"
+  - "Email ID"
+  - "Email Address"
+  - "E-mail"
+  - "E-Mail ID"
+  - "ईमेल"
+  - "ई-मेल"
+
+mobile_number:
+  - "Mobile Number"
+  - "Mobile No"
+  - "Mobile"
+  - "Phone Number"
+  - "Contact Number"
+  - "WhatsApp Number"
+  - "मोबाइल नंबर"
+  - "फोन नंबर"
+
+address_line1:
+  - "Address"
+  - "Address Line 1"
+  - "Address Line1"
+  - "House No"
+  - "House Number"
+  - "Door No"
+  - "Street Address"
+  - "Residential Address"
+  - "Permanent Address"
+  - "पता"
+  - "पत्राचार का पता"
+
+address_line2:
+  - "Address Line 2"
+  - "Address Line2"
+  - "Locality"
+  - "Area"
+  - "Colony"
+  - "Village"
+  - "ग्राम"
+  - "मोहल्ला"
+
+city:
+  - "City"
+  - "Town"
+  - "City/Town"
+  - "शहर"
+  - "नगर"
+
+district:
+  - "District"
+  - "District Name"
+  - "जिला"
+
+state:
+  - "State"
+  - "State Name"
+  - "Province"
+  - "राज्य"
+  - "प्रदेश"
+
+pincode:
+  - "PIN Code"
+  - "PIN"
+  - "Pincode"
+  - "Pin Code"
+  - "Zip Code"
+  - "Postal Code"
+  - "पिन कोड"
+
+country:
+  - "Country"
+  - "Country of Residence"
+  - "देश"
+
+bank_account_number:
+  - "Bank Account Number"
+  - "Account Number"
+  - "A/C Number"
+  - "Bank A/C No"
+  - "बैंक खाता संख्या"
+  - "बैंक अकाउंट नंबर"
+
+bank_ifsc:
+  - "IFSC Code"
+  - "IFSC"
+  - "Bank IFSC"
+  - "IFSC No"
+  - "आईएफएससी कोड"
+
+bank_name:
+  - "Bank Name"
+  - "Name of Bank"
+  - "बैंक का नाम"
+
+annual_income:
+  - "Annual Income"
+  - "Annual Family Income"
+  - "Family Annual Income"
+  - "Income"
+  - "Yearly Income"
+  - "वार्षिक आय"
+  - "पारिवारिक आय"
+
+caste:
+  - "Caste"
+  - "Community"
+  - "Caste/Community"
+  - "जाति"
+
+religion:
+  - "Religion"
+  - "धर्म"
+
+nationality:
+  - "Nationality"
+  - "राष्ट्रीयता"
+
+category:
+  - "Category"
+  - "Reservation Category"
+  - "Caste Category"
+  - "SC/ST/OBC/General"
+  - "श्रेणी"
+  - "वर्ग"
+
+disability_percentage:
+  - "Disability Percentage"
+  - "% of Disability"
+  - "Disability (%)"
+  - "विकलांगता प्रतिशत"
+
+photograph:
+  - "Photograph"
+  - "Photo"
+  - "Passport Size Photo"
+  - "Recent Photograph"
+  - "फोटो"
+
+signature:
+  - "Signature"
+  - "Applicant Signature"
+  - "हस्ताक्षर"
+
+class_10_percentage:
+  - "10th Percentage"
+  - "Class 10 Percentage"
+  - "10th Marks"
+  - "SSC Percentage"
+  - "Matriculation Percentage"
+  - "10वीं प्रतिशत"
+
+class_12_percentage:
+  - "12th Percentage"
+  - "Class 12 Percentage"
+  - "12th Marks"
+  - "HSC Percentage"
+  - "Intermediate Percentage"
+  - "12वीं प्रतिशत"
+
+graduation_percentage:
+  - "Graduation Percentage"
+  - "UG Percentage"
+  - "Bachelor's Percentage"
+  - "Degree Percentage"
+  - "स्नातक प्रतिशत"

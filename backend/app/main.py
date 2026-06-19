@@ -13,8 +13,30 @@ from app.api.v1 import auth, profiles, documents, forms, applications
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup and shutdown events."""
+    import asyncio
+
     # Startup
     print(f"Starting AutoFormFiller API (env={settings.APP_ENV})")
+
+    # Seed canonical field embeddings in a background thread (idempotent ON CONFLICT DO UPDATE)
+    # This ensures pgvector has data before the first prefill task runs.
+    async def _seed_embeddings_async():
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: __import__(
+                    "ai_services.form_understanding_agent.field_seeder",
+                    fromlist=["seed_field_embeddings"],
+                ).seed_field_embeddings(settings.DATABASE_SYNC_URL),
+            )
+            print("✓ Field embeddings seeded/verified.")
+        except Exception as exc:
+            # Non-fatal — embedding stage degrades gracefully to LLM fallback
+            print(f"⚠ Field embedding seed skipped: {exc}")
+
+    asyncio.create_task(_seed_embeddings_async())
+
     yield
     # Shutdown
     print("Shutting down AutoFormFiller API")

@@ -86,9 +86,13 @@ autoformfiller/
 * **Field Extraction Agent:** `ai_services/extraction_agent/` provides Aadhaar/PAN-specific extraction with verification-aware confidence scoring.
 * **Profile Merge Service:** `backend/app/services/profile_service.py` handles upserts and conflict queueing from extracted fields.
 
+* **Form Understanding Agent:** `ai_services/form_understanding_agent/` parses PDF AcroForms and flat PDFs using an OCR+LLM fallback strategy.
+* **Field Mapping Pipeline:** 3-stage mapping (Rule Engine → pgvector Semantic Embeddings → Local LLM fallback) to confidently auto-fill instances.
+* **Gap Detection & Review:** Complete endpoints for detecting missing fields, tracking confidence scores, and enforcing human approval before submission.
+
 ## Features In Progress
 
-* **Form Filling Agent:** Semantic embedding matching for form field mapping to unified profile fields.
+* **Phase 3: Government Portal Integration:** Playwright scripts to automatically submit approved forms to specific external portals.
 
 ## Features Completed (Phase 1 Document Pipeline)
 
@@ -105,6 +109,16 @@ autoformfiller/
 | 4. Profile merge service | **Done** |
 | 5. Processing status tracking | **Done** |
 | 6. End-to-end test (synthetic Aadhaar) | **Done** |
+
+## Phase 2 Pipeline Tasks (in order)
+
+| Task | Status |
+| ---- | ------ |
+| 1. Form Understanding Agent (PDF) | **Done** |
+| 2. Form Template Storage | **Done** |
+| 3. Field Mapping Engine (3-stage) | **Done** |
+| 4. Gap Detection | **Done** |
+| 5. Review Workflow | **Done** |
 
 ## Planned Features
 
