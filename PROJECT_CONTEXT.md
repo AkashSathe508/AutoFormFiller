@@ -81,11 +81,30 @@ autoformfiller/
 * **Frontend Basics:** Dashboard, Vault, Auth pages, Profile management UI, Forms list, and FormInstanceReview UI.
 * **Backend API:** Routers for auth, profiles, documents, forms, and applications.
 * **AI Agent Skeleton:** OCR, classification, and verification agent directories are set up.
+* **Profile Field Decryption:** `GET /profiles/{id}/fields` decrypts values using each field's source document DEK (matches merge-time encryption).
+* **Post-Commit Document Processing:** Celery `extract_document` is enqueued via FastAPI `BackgroundTasks` after the upload transaction commits (avoids race with worker).
+* **Field Extraction Agent:** `ai_services/extraction_agent/` provides Aadhaar/PAN-specific extraction with verification-aware confidence scoring.
+* **Profile Merge Service:** `backend/app/services/profile_service.py` handles upserts and conflict queueing from extracted fields.
 
 ## Features In Progress
 
-* **Document Extraction Pipeline:** Wiring PaddleOCR and the LLM runtime to automatically populate the `document_extractions` table.
 * **Form Filling Agent:** Semantic embedding matching for form field mapping to unified profile fields.
+
+## Features Completed (Phase 1 Document Pipeline)
+
+* **Document Processing Pipeline:** Upload → encrypt/MinIO → Celery OCR → classify → verify → extract → profile merge with `processing_status` tracking (`processing` / `extracted` / `verified` / `failed`).
+* **End-to-End Tests:** `backend/tests/test_document_pipeline_e2e.py` (in-process agent chain) and `scratch/test_pipeline.py` (live API against Docker stack).
+
+## Phase 1 Pipeline Tasks (in order)
+
+| Task | Status |
+| ---- | ------ |
+| 1. Encryption round-trip (profile fields) | **Done** |
+| 2. Upload → Celery post-commit enqueue | **Done** |
+| 3. Aadhaar/PAN-specific extraction | **Done** |
+| 4. Profile merge service | **Done** |
+| 5. Processing status tracking | **Done** |
+| 6. End-to-end test (synthetic Aadhaar) | **Done** |
 
 ## Planned Features
 
@@ -159,6 +178,7 @@ autoformfiller/
 
 * `ERROR: relation "refresh_tokens" does not exist` occurs if the database volume is initialized before the schema file was updated. Recreating the database volume or manually executing the DDL resolves it.
 * `ERROR: extension "vector" is not available` occurs if a user runs native Postgres on Windows instead of the provided `docker-compose` environment.
+* Existing Postgres volumes created before June 2026 need `database/init/004_processing_status.sql` applied (or volume recreated) to add `documents.processing_status`.
 
 ## Technical Debt
 
@@ -168,13 +188,13 @@ autoformfiller/
 
 ## Current Progress Summary
 
-Overall completion estimate: 65%
+Overall completion estimate: 72% (Phase 1 document pipeline **complete**; form filling next)
 
 ## Recommended Next Steps
 
-* **Priority 1:** Finalize the AI agent pipeline (`ai_services`) to process uploaded documents and write to the `document_extractions` table.
-* **Priority 2:** Implement the form mapping engine using semantic embeddings to automatically resolve form field targets to profile fields.
-* **Priority 3:** Refine the frontend `FormInstanceReview` UI to handle conflict resolutions and human-in-the-loop approvals seamlessly.
+* **Priority 1:** Implement the form mapping engine using semantic embeddings to automatically resolve form field targets to profile fields.
+* **Priority 2:** Refine the frontend `FormInstanceReview` UI to handle conflict resolutions and human-in-the-loop approvals seamlessly.
+* **Priority 3:** Wire workflow orchestrator state machine for form-fill and submission flows.
 
 ## Important Notes For Future AI Agents
 

@@ -159,7 +159,7 @@ services:
       dockerfile: backend/Dockerfile
     container_name: autoform_celery
     restart: unless-stopped
-    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4 -Q documents,forms,notifications
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4 -Q documents,forms,notifications,ocr,parsing,prefill,submit
     env_file:
       - ../.env
     environment:
@@ -188,7 +188,7 @@ services:
       dockerfile: backend/Dockerfile
     container_name: autoform_celery_beat
     restart: unless-stopped
-    command: celery -A app.tasks.celery_app beat --loglevel=info
+    command: celery -A app.celery_app beat --loglevel=info
     env_file:
       - ../.env
     environment:

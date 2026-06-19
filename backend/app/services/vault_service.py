@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.encryption import generate_dek, wrap_dek, encrypt_document_content
 from app.models.document import Document
-from app.tasks.document_tasks import extract_document
 
 
 class VaultService:
@@ -39,7 +38,7 @@ class VaultService:
         2. Check for duplicate (same hash, same profile) — dedup
         3. Generate DEK, encrypt content, stream to MinIO
         4. Insert documents row
-        5. Enqueue extraction Celery task
+        (Caller enqueues extraction after DB commit.)
         """
         content_hash = hashlib.sha256(content).hexdigest()
 
@@ -95,12 +94,10 @@ class VaultService:
             size_bytes=len(content),
             is_current=True,
             original_filename=original_filename,
+            processing_status="processing",
         )
         self.db.add(document)
         await self.db.flush()
-
-        # Enqueue async extraction pipeline
-        extract_document.delay(str(document.id))
 
         return document.id, "processing"
 

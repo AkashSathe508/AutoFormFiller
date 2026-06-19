@@ -51,7 +51,8 @@ CREATE TABLE documents (
     is_current BOOLEAN NOT NULL DEFAULT true,
     uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_hint_at TIMESTAMPTZ,
-    original_filename TEXT
+    original_filename TEXT,
+    processing_status TEXT NOT NULL DEFAULT 'processing'
 );
 CREATE INDEX idx_documents_profile_id ON documents(profile_id);
 CREATE INDEX idx_documents_content_hash ON documents(content_hash);

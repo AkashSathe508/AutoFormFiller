@@ -4,7 +4,7 @@ import io
 import hashlib
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,12 +15,20 @@ from app.models.user import Profile
 from app.models.document import Document, DocumentExtraction, DocumentVerification
 from app.models.audit import ConsentLog, AuditLog
 from app.services.vault_service import VaultService
+from app.schemas.documents import DocumentUploadResponse, DocumentStatusResponse, DocumentListResponse
 
 router = APIRouter()
 
 
-@router.post("", status_code=202)
+def enqueue_document_extraction(document_id: str) -> None:
+    """Enqueue Celery extraction after the upload transaction has committed."""
+    from app.tasks.document_tasks import extract_document
+    extract_document.delay(document_id)
+
+
+@router.post("", status_code=202, response_model=DocumentUploadResponse)
 async def upload_document(
+    background_tasks: BackgroundTasks,
     profile_id: str = Form(...),
     doc_type_hint: Optional[str] = Form(None),
     file: UploadFile = File(...),
@@ -80,10 +88,14 @@ async def upload_document(
         details={"document_id": str(document_id), "mime_type": file.content_type},
     ))
 
+    if status == "processing":
+        # Run after get_db commits so the Celery worker can load the document row.
+        background_tasks.add_task(enqueue_document_extraction, str(document_id))
+
     return {"document_id": str(document_id), "status": status}
 
 
-@router.get("/{document_id}/status")
+@router.get("/{document_id}/status", response_model=DocumentStatusResponse)
 async def get_document_status(
     document_id: str,
     current_user: dict = Depends(get_current_user),
@@ -115,11 +127,9 @@ async def get_document_status(
     )
     verification = ver_result.scalar_one_or_none()
 
-    status = "uploaded"
-    if extraction:
-        status = "extracted"
-    if verification:
-        status = "verified"
+    status = doc.processing_status or "processing"
+    if status == "processing" and not extraction:
+        status = "uploaded"
 
     extracted_fields = []
     if extraction and extraction.structured_fields:
@@ -135,7 +145,7 @@ async def get_document_status(
     }
 
 
-@router.get("")
+@router.get("", response_model=DocumentListResponse)
 async def list_documents(
     profile_id: str = Query(...),
     doc_type: Optional[str] = Query(None),

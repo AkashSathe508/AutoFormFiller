@@ -2,7 +2,6 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,18 +11,17 @@ from app.models.form import FormInstance
 from app.models.workflow import ApplicationStatusLog
 from app.models.audit import AuditLog
 
+from app.schemas.applications import (
+    UpdateStatusRequest, ApplicationListResponse, 
+    StatusUpdateResponse, ApplicationTimelineResponse
+)
+
 router = APIRouter()
-
-
-class UpdateStatusRequest(BaseModel):
-    status: str
-    note: Optional[str] = None
-
 
 VALID_STATUSES = {"draft", "filled", "awaiting_review", "submitted", "under_process", "approved", "rejected"}
 
 
-@router.get("")
+@router.get("", response_model=ApplicationListResponse)
 async def list_applications(
     profile_id: str = Query(...),
     status: Optional[str] = Query(None),
@@ -61,7 +59,7 @@ async def list_applications(
     }
 
 
-@router.patch("/{form_instance_id}/status")
+@router.patch("/{form_instance_id}/status", response_model=StatusUpdateResponse)
 async def update_application_status(
     form_instance_id: str,
     request: UpdateStatusRequest,
@@ -103,7 +101,7 @@ async def update_application_status(
     return {"form_instance_id": form_instance_id, "status": request.status}
 
 
-@router.get("/{form_instance_id}/timeline")
+@router.get("/{form_instance_id}/timeline", response_model=ApplicationTimelineResponse)
 async def get_application_timeline(
     form_instance_id: str,
     current_user: dict = Depends(get_current_user),

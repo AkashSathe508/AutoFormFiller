@@ -10,6 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 from app.core.config import settings
 from app.db.session import get_db
@@ -110,19 +111,19 @@ async def set_rls_context(
     """Set Postgres session variables for Row-Level Security."""
     if bypass:
         await db.execute(
-            "SELECT set_config('app.bypass_rls', 'true', true)"
+            text("SELECT set_config('app.bypass_rls', 'true', true)")
         )
     else:
         await db.execute(
-            "SELECT set_config('app.bypass_rls', 'false', true)"
+            text("SELECT set_config('app.bypass_rls', 'false', true)")
         )
     if user_id:
         await db.execute(
-            f"SELECT set_config('app.current_user_id', '{user_id}', true)"
+            text(f"SELECT set_config('app.current_user_id', '{user_id}', true)")
         )
     if profile_id:
         await db.execute(
-            f"SELECT set_config('app.current_profile_id', '{profile_id}', true)"
+            text(f"SELECT set_config('app.current_profile_id', '{profile_id}', true)")
         )
 
 

@@ -7,26 +7,19 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user, set_rls_context
-from app.core.encryption import encrypt_field, decrypt_field, mask_field_value, SENSITIVE_FIELD_KEYS, generate_dek
+from app.core.encryption import decrypt_field, mask_field_value, SENSITIVE_FIELD_KEYS, unwrap_dek
 from app.db.session import get_db
 from app.models.user import User, Profile
 from app.models.profile_field import ProfileField
 from app.models.document import Document
 from app.models.form import FormInstance
 from app.models.audit import AuditLog, ConsentLog
+from app.schemas.profiles import CreateProfileRequest, ProfileResponse
 
 router = APIRouter()
 
 
-class CreateProfileRequest(BaseModel):
-    display_name: str
-    relation_to_account: str = "self"
 
-
-class ProfileResponse(BaseModel):
-    profile_id: str
-    display_name: str
-    relation_to_account: str
 
 
 @router.post("", status_code=201)
@@ -112,18 +105,27 @@ async def get_profile_fields(
     )
     profile_fields = fields_result.scalars().all()
 
-    # We need profile DEK to decrypt. For MVP: derive from profile ID.
-    # Production: stored wrapped DEK per profile.
-    from app.core.encryption import unwrap_dek
-    # DEK placeholder — in production each profile has its own wrapped DEK stored in DB
-    dek = generate_dek()  # This would be loaded from stored wrapped DEK in production
+    # Profile fields are encrypted with the source document's DEK at merge time.
+    source_doc_ids = {f.source_document_id for f in profile_fields if f.source_document_id}
+    wrapped_dek_by_doc_id = {}
+    if source_doc_ids:
+        docs_result = await db.execute(
+            select(Document).where(Document.id.in_(source_doc_ids))
+        )
+        for doc in docs_result.scalars().all():
+            wrapped_dek_by_doc_id[doc.id] = doc.encryption_key_id
 
     response_fields = []
     for field in profile_fields:
-        try:
-            decrypted = decrypt_field(field.field_value_encrypted, dek, field.field_key)
-        except Exception:
-            decrypted = "[decryption error]"
+        decrypted = "[decryption error]"
+        if field.source_document_id and field.source_document_id in wrapped_dek_by_doc_id:
+            try:
+                dek = unwrap_dek(wrapped_dek_by_doc_id[field.source_document_id])
+                decrypted = decrypt_field(field.field_value_encrypted, dek, field.field_key)
+            except Exception:
+                decrypted = "[decryption error]"
+        elif not field.source_document_id:
+            decrypted = "[no source document]"
 
         if not reveal and field.field_key in SENSITIVE_FIELD_KEYS:
             display_value = mask_field_value(field.field_key, decrypted)
