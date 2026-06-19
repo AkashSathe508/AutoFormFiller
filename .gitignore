@@ -81,3 +81,7 @@ redis_data/
 # Temp files
 tmp/
 *.tmp
+
+# Celery Beat
+celerybeat-schedule
+backend/celerybeat-schedule
